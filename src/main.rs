@@ -8,9 +8,8 @@ use std::time::Instant;
 fn main() {
     let now = Instant::now();
 
-    let mut games = 0;
-
-    let result = match xoxo::solve(xoxo::Board::new(), &mut games) {
+    let (result, games) = xoxo::solve(xoxo::Board::new());
+    let result = match result {
         xoxo::Status::Win => "win for the first player",
         xoxo::Status::Draw => "draw",
         xoxo::Status::Loss => "win for the second player",

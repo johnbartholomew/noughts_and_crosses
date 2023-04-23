@@ -5,8 +5,7 @@ use std::time::Duration;
 fn solver_benchmark(c: &mut Criterion) {
     c.bench_function("solve (new Board)", |b| {
         b.iter(|| {
-            let mut games = 0;
-            let result = xoxo::solve(xoxo::Board::new(), &mut games);
+            let (result, games) = xoxo::solve(xoxo::Board::new());
             black_box(result); // Don't optimise out the whole thing please.
             black_box(games);
         })
