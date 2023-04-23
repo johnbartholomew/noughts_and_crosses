@@ -22,6 +22,9 @@ pub struct Board {
     opponent: u16,
 }
 
+#[derive(Debug)]
+struct InvalidMove;
+
 impl Board {
     /// The binary representation of a full board
     const FULL: u16 = 0b111111111;
@@ -62,11 +65,12 @@ impl Board {
 
     /// Returns an instance for the opponent after the specified move has been
     /// made, or an error if the move is invalid
-    fn with_move(&self, position: u16) -> Result<Self, &'static str> {
+    fn with_move(&self, position: u16) -> Result<Self, InvalidMove> {
+        assert!(position <= 8, "invalid board cell index");
         let position = 1 << position;
 
         if self.combined() & position != 0 {
-            return Err("Invalid move");
+            return Err(InvalidMove);
         }
 
         Ok(Self {
