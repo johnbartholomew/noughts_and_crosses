@@ -54,6 +54,14 @@ impl Board {
         Self::LINES.iter().any(|&line| self.opponent & line == line)
     }
 
+    fn has_won(&self) -> bool {
+        Self {
+            player: self.opponent,
+            opponent: self.player,
+        }
+        .has_lost()
+    }
+
     /// Returns whether there are any moves available
     fn has_moves(&self) -> bool {
         self.combined() != Self::FULL
@@ -83,6 +91,10 @@ impl Board {
 /// Returns whether the game is a win, draw, or loss for the current player
 /// starting from the specified board position
 pub fn solve(board: Board) -> (Status, usize) {
+    debug_assert!(
+        !board.has_won(),
+        "We already won so we should not be trying more moves."
+    );
     if board.has_lost() {
         return (Status::Loss, 1);
     }
