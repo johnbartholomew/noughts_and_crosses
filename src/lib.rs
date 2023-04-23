@@ -9,7 +9,6 @@ pub enum Status {
 pub struct Board {
     player: u16,
     opponent: u16,
-    combined: u16,
 }
 
 impl Board {
@@ -33,7 +32,6 @@ impl Board {
         Self {
             player: 0,
             opponent: 0,
-            combined: 0,
         }
     }
 
@@ -50,7 +48,11 @@ impl Board {
 
     /// Returns whether there are any moves available
     fn has_moves(&self) -> bool {
-        self.combined != Self::FULL
+        self.combined() != Self::FULL
+    }
+
+    fn combined(&self) -> u16 {
+        self.player | self.opponent
     }
 
     /// Returns an instance for the opponent after the specified move has been
@@ -58,14 +60,13 @@ impl Board {
     fn with_move(&self, position: u16) -> Result<Self, &'static str> {
         let position = 1 << position;
 
-        if self.combined & position != 0 {
+        if self.combined() & position != 0 {
             return Err("Invalid move");
         }
 
         Ok(Self {
             player: self.opponent,
             opponent: self.player | position,
-            combined: self.player | self.opponent | position,
         })
     }
 }
