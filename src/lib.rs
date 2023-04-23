@@ -71,12 +71,11 @@ impl Board {
         self.player | self.opponent
     }
 
-    /// Returns an instance for the opponent after the specified move has been
-    /// made, or an error if the move is invalid
-    fn with_move(&self, position: u16) -> Result<Self, InvalidMove> {
-        assert!(position <= 8, "invalid board cell index");
-        let position = 1 << position;
+    fn remaining_bits(&self) -> u16 {
+        Self::FULL & !self.combined()
+    }
 
+    fn with_move_bit(&self, position: u16) -> Result<Self, InvalidMove> {
         if self.combined() & position != 0 {
             return Err(InvalidMove);
         }
@@ -85,6 +84,13 @@ impl Board {
             player: self.opponent,
             opponent: self.player | position,
         })
+    }
+
+    /// Returns an instance for the opponent after the specified move has been
+    /// made, or an error if the move is invalid
+    fn with_move(&self, position: u16) -> Result<Self, InvalidMove> {
+        assert!(position <= 8, "invalid board cell index");
+        self.with_move_bit(1 << position)
     }
 }
 
@@ -98,21 +104,22 @@ pub fn solve(board: Board) -> (Status, usize) {
     if board.has_lost() {
         return (Status::Loss, 1);
     }
-    if !board.has_moves() {
+
+    let mut bits = board.remaining_bits();
+    if bits == 0 {
         return (Status::Draw, 1);
     }
-
-    // start by assuming the player will lose
     let mut best_result = Status::Loss;
     let mut games = 0;
-    for position in 0..=8 {
-        if let Ok(opponent_board) = board.with_move(position) {
-            let (result, n) = solve(opponent_board);
-            games += n;
-            best_result = best_result.max(result.complement());
-            if best_result == Status::Win {
-                break;
-            }
+    while bits != 0 {
+        let low_bit = bits & !(bits - 1);
+        bits &= !low_bit;
+        let opponent_board = board.with_move_bit(low_bit).unwrap();
+        let (result, n) = solve(opponent_board);
+        games += n;
+        best_result = best_result.max(result.complement());
+        if best_result == Status::Win {
+            break;
         }
     }
     (best_result, games)
