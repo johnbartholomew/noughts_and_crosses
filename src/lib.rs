@@ -37,13 +37,7 @@ impl Board {
 
     /// Returns whether the current player has lost
     fn has_lost(&self) -> bool {
-        for line in Self::LINES {
-            if self.opponent & line == line {
-                return true;
-            }
-        }
-
-        false
+        Self::LINES.iter().any(|&line| self.opponent & line == line)
     }
 
     /// Returns whether there are any moves available
