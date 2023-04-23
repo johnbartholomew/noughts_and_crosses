@@ -6,15 +6,10 @@ pub enum Status {
     Win,
 }
 
-impl Status {
-    fn complement(&self) -> Self {
-        match self {
-            Status::Loss => Status::Win,
-            Status::Draw => Status::Draw,
-            Status::Win => Status::Loss,
-        }
-    }
-}
+// Internally we use a signed int so that we can negate it to get the 'other' player's win state.
+const LOSS: i32 = -1;
+const WIN: i32 = 1;
+const DRAW: i32 = 0;
 
 /// Represents the noughts and crosses board
 pub struct Board {
@@ -85,35 +80,47 @@ impl Board {
     }
 }
 
-/// Returns whether the game is a win, draw, or loss for the current player
-/// starting from the specified board position
-pub fn solve(board: Board) -> (Status, usize) {
+fn solve_inner(board: Board) -> (i32, usize) {
     debug_assert!(
         !board.has_won(),
         "We already won so we should not be trying more moves."
     );
     if board.has_lost() {
-        return (Status::Loss, 1);
+        return (LOSS, 1);
     }
 
     let mut bits = board.remaining_bits();
     if bits == 0 {
-        return (Status::Draw, 1);
+        return (DRAW, 1);
     }
-    let mut best_result = Status::Loss;
+    let mut best_result = -1;
     let mut games = 0;
     while bits != 0 {
         let low_bit = bits & !(bits - 1);
         bits &= !low_bit;
         let opponent_board = board.with_move_bit(low_bit);
-        let (result, n) = solve(opponent_board);
+        let (result, n) = solve_inner(opponent_board);
         games += n;
-        best_result = best_result.max(result.complement());
-        if best_result == Status::Win {
+        // Negate the opponent's result to get our result.
+        best_result = best_result.max(-result);
+        if best_result == WIN {
             break;
         }
     }
     (best_result, games)
+}
+
+/// Returns whether the game is a win, draw, or loss for the current player
+/// starting from the specified board position
+pub fn solve(board: Board) -> (Status, usize) {
+    let (result, n) = solve_inner(board);
+    let result = match result {
+        LOSS => Status::Loss,
+        DRAW => Status::Draw,
+        WIN => Status::Win,
+        _ => unreachable!(),
+    };
+    (result, n)
 }
 
 #[cfg(test)]
