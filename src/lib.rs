@@ -74,6 +74,10 @@ impl Board {
 /// Returns whether the game is a win, draw, or loss for the current player
 /// starting from the specified board position
 pub fn solve(board: Board, games: &mut u32) -> Status {
+    if board.has_lost() {
+        *games += 1;
+        return Status::Loss;
+    }
     if !board.has_moves() {
         *games += 1;
         return Status::Draw;
@@ -84,12 +88,6 @@ pub fn solve(board: Board, games: &mut u32) -> Status {
 
     for position in 0..=8 {
         if let Ok(opponent_board) = board.with_move(position) {
-            // the player has won, so return early
-            if opponent_board.has_lost() {
-                *games += 1;
-                return Status::Win;
-            }
-
             match solve(opponent_board, games) {
                 // if the opponent can win, continue looking for a better result
                 Status::Win => (),
