@@ -5,10 +5,12 @@ use noughts_and_crosses as xoxo;
 
 use std::time::Instant;
 
+const FINAL_RESULT: (xoxo::Status, usize) = xoxo::solve(xoxo::Board::new());
+
 fn main() {
     let now = Instant::now();
 
-    let (result, games) = xoxo::solve(xoxo::Board::new());
+    let (result, games) = FINAL_RESULT; //xoxo::solve(xoxo::Board::new());
     let result = match result {
         xoxo::Status::Win => "win for the first player",
         xoxo::Status::Draw => "draw",

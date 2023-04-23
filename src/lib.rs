@@ -34,7 +34,7 @@ impl Board {
     ];
 
     /// Constructs a new instances representing an empty board
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self {
             player: 0,
             opponent: 0,
@@ -42,11 +42,20 @@ impl Board {
     }
 
     /// Returns whether the current player has lost
-    fn has_lost(&self) -> bool {
-        Self::LINES.iter().any(|&line| self.opponent & line == line)
+    const fn has_lost(&self) -> bool {
+        let o = self.opponent;
+        (Self::LINES[0] & o == Self::LINES[0])
+            || (Self::LINES[1] & o == Self::LINES[1])
+            || (Self::LINES[2] & o == Self::LINES[2])
+            || (Self::LINES[3] & o == Self::LINES[3])
+            || (Self::LINES[4] & o == Self::LINES[4])
+            || (Self::LINES[5] & o == Self::LINES[5])
+            || (Self::LINES[6] & o == Self::LINES[6])
+            || (Self::LINES[7] & o == Self::LINES[7])
+        // Self::LINES.iter().any(|&line| self.opponent & line == line)
     }
 
-    fn has_won(&self) -> bool {
+    const fn has_won(&self) -> bool {
         Self {
             player: self.opponent,
             opponent: self.player,
@@ -54,15 +63,15 @@ impl Board {
         .has_lost()
     }
 
-    fn combined(&self) -> u16 {
+    const fn combined(&self) -> u16 {
         self.player | self.opponent
     }
 
-    fn remaining_bits(&self) -> u16 {
+    const fn remaining_bits(&self) -> u16 {
         Self::FULL & !self.combined()
     }
 
-    fn with_move_bit(&self, position: u16) -> Self {
+    const fn with_move_bit(&self, position: u16) -> Self {
         debug_assert!(
             position & Self::FULL == position,
             "not a valid board bitmap"
@@ -80,7 +89,7 @@ impl Board {
     }
 }
 
-fn solve_inner(board: Board) -> (i32, usize) {
+const fn solve_inner(board: Board) -> (i32, usize) {
     debug_assert!(
         !board.has_won(),
         "We already won so we should not be trying more moves."
@@ -102,7 +111,12 @@ fn solve_inner(board: Board) -> (i32, usize) {
         let (result, n) = solve_inner(opponent_board);
         games += n;
         // Negate the opponent's result to get our result.
-        best_result = best_result.max(-result);
+        // max() method is not const so can't use it here.
+        best_result = if -result > best_result {
+            -result
+        } else {
+            best_result
+        };
         if best_result == WIN {
             break;
         }
@@ -112,7 +126,7 @@ fn solve_inner(board: Board) -> (i32, usize) {
 
 /// Returns whether the game is a win, draw, or loss for the current player
 /// starting from the specified board position
-pub fn solve(board: Board) -> (Status, usize) {
+pub const fn solve(board: Board) -> (Status, usize) {
     let (result, n) = solve_inner(board);
     let result = match result {
         LOSS => Status::Loss,
