@@ -1,8 +1,19 @@
 /// Represents the final status of a game
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Status {
-    Win,
-    Draw,
     Loss,
+    Draw,
+    Win,
+}
+
+impl Status {
+    fn complement(&self) -> Self {
+        match self {
+            Status::Loss => Status::Win,
+            Status::Draw => Status::Draw,
+            Status::Win => Status::Loss,
+        }
+    }
 }
 
 /// Represents the noughts and crosses board
@@ -82,15 +93,9 @@ pub fn solve(board: Board) -> (Status, usize) {
         if let Ok(opponent_board) = board.with_move(position) {
             let (result, n) = solve(opponent_board);
             games += n;
-            match result {
-                // if the opponent can win, continue looking for a better result
-                Status::Win => (),
-
-                // the player can draw, but continue looking for a better result
-                Status::Draw => best_result = Status::Draw,
-
-                // the player can win, so we can return early
-                Status::Loss => return (Status::Win, games),
+            best_result = best_result.max(result.complement());
+            if best_result == Status::Win {
+                break;
             }
         }
     }
