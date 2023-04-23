@@ -22,9 +22,6 @@ pub struct Board {
     opponent: u16,
 }
 
-#[derive(Debug)]
-struct InvalidMove;
-
 impl Board {
     /// The binary representation of a full board
     const FULL: u16 = 0b111111111;
@@ -62,11 +59,6 @@ impl Board {
         .has_lost()
     }
 
-    /// Returns whether there are any moves available
-    fn has_moves(&self) -> bool {
-        self.combined() != Self::FULL
-    }
-
     fn combined(&self) -> u16 {
         self.player | self.opponent
     }
@@ -75,22 +67,21 @@ impl Board {
         Self::FULL & !self.combined()
     }
 
-    fn with_move_bit(&self, position: u16) -> Result<Self, InvalidMove> {
-        if self.combined() & position != 0 {
-            return Err(InvalidMove);
-        }
+    fn with_move_bit(&self, position: u16) -> Self {
+        debug_assert!(
+            position & Self::FULL == position,
+            "not a valid board bitmap"
+        );
+        debug_assert!(
+            position.count_ones() == 1,
+            "not a valid single-move board bitmap"
+        );
+        debug_assert!(self.combined() & position == 0, "position is already taken");
 
-        Ok(Self {
+        Self {
             player: self.opponent,
             opponent: self.player | position,
-        })
-    }
-
-    /// Returns an instance for the opponent after the specified move has been
-    /// made, or an error if the move is invalid
-    fn with_move(&self, position: u16) -> Result<Self, InvalidMove> {
-        assert!(position <= 8, "invalid board cell index");
-        self.with_move_bit(1 << position)
+        }
     }
 }
 
@@ -114,7 +105,7 @@ pub fn solve(board: Board) -> (Status, usize) {
     while bits != 0 {
         let low_bit = bits & !(bits - 1);
         bits &= !low_bit;
-        let opponent_board = board.with_move_bit(low_bit).unwrap();
+        let opponent_board = board.with_move_bit(low_bit);
         let (result, n) = solve(opponent_board);
         games += n;
         best_result = best_result.max(result.complement());
@@ -130,17 +121,12 @@ mod tests {
     use super::*;
 
     #[test]
-    fn invalid_move() {
-        assert!(Board::new().with_move(0).unwrap().with_move(0).is_err())
-    }
-
-    #[test]
     fn has_lost() {
         let mut board = Board::new();
 
         for position in 0..=6 {
             assert!(!board.has_lost());
-            board = board.with_move(position).unwrap();
+            board = board.with_move_bit(1u16 << position);
         }
 
         // At this point the board is:
@@ -156,10 +142,10 @@ mod tests {
         let mut board = Board::new();
 
         for position in 0..=8 {
-            assert!(board.has_moves());
-            board = board.with_move(position).unwrap();
+            assert!(board.remaining_bits() != 0);
+            board = board.with_move_bit(1u16 << position);
         }
 
-        assert!(!board.has_moves());
+        assert!(board.remaining_bits() == 0);
     }
 }
