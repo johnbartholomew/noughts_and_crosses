@@ -21,14 +21,15 @@ mod board {
             } else {
                 (self.player, self.opponent)
             };
-            for i in 0..=9 {
+            for i in 0..9 {
                 let row = i / 3;
                 let row = &mut buf[(4 * row)..];
+                let col = i % 3;
                 let b = 1u16 << i;
                 if ex & b == b {
-                    row[i] = b'X';
+                    row[col] = b'X';
                 } else if oh & b == b {
-                    row[i] = b'O';
+                    row[col] = b'O';
                 }
             }
             // SAFETY: The string is UTF-8 (actually ASCII) by construction since it only uses ASCII characters.
@@ -154,8 +155,7 @@ mod board {
 
     impl std::fmt::Display for InvalidBoard {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            f.write_str("invalid board: ")?;
-            f.write_str(self.0)
+            write!(f, "invalid board: {}", self.0)
         }
     }
 
