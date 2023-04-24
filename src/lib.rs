@@ -182,11 +182,19 @@ mod board {
             }
             let player_turns = player.count_ones();
             let opponent_turns = opponent.count_ones();
+            if player_turns > opponent_turns {
+                return Err(InvalidBoard("player has had too many turns"));
+            }
             if opponent_turns > player_turns + 1 {
                 return Err(InvalidBoard("opponent has had too many turns"));
             }
-            if player_turns > opponent_turns {
-                return Err(InvalidBoard("player has had too many turns"));
+            // opponent is always placed the last piece (by construction, see with_move_bits),
+            // therefore *only* opponent can ever win! Once the winning move is played,
+            // then "opponent" played it. If an odd number of moves have been played
+            // in total, then X won, if an even number of moves have been played in total,
+            // then O won.
+            if has_won(player) {
+                return Err(InvalidBoard("opponent had a turn after player won"));
             }
             Ok(Board { player, opponent })
         }
