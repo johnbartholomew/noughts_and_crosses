@@ -328,7 +328,7 @@ const LOSS: StatusInt = -1;
 const WIN: StatusInt = 1;
 const DRAW: StatusInt = 0;
 
-fn solve_inner(board: Board) -> (StatusInt, usize) {
+fn solve_inner(board: &Board) -> (StatusInt, usize) {
     if board.has_lost() {
         return (LOSS, 1);
     }
@@ -336,7 +336,7 @@ fn solve_inner(board: Board) -> (StatusInt, usize) {
     let mut best_result = -1;
     let mut games = 0;
     for opponent_board in board.moves() {
-        let (result, n) = solve_inner(opponent_board);
+        let (result, n) = solve_inner(&opponent_board);
         games += n;
         // Negate the opponent's result to get our result.
         best_result = best_result.max(-result);
@@ -361,7 +361,7 @@ pub enum Status {
 
 /// Returns whether the game is a win, draw, or loss for the current player starting from the
 /// specified board position, and the count of boards examined not including the input board.
-pub fn solve(board: Board) -> (Status, usize) {
+pub fn solve(board: &Board) -> (Status, usize) {
     let (result, n) = solve_inner(board);
     let result = match result {
         LOSS => Status::Loss,
@@ -374,5 +374,5 @@ pub fn solve(board: Board) -> (Status, usize) {
 
 #[test]
 fn test_solve_from_empty() {
-    assert_eq!(solve(Board::new()), (Status::Draw, 38856));
+    assert_eq!(solve(&Board::new()), (Status::Draw, 38856));
 }
