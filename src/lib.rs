@@ -196,11 +196,6 @@ mod board {
             has_won(self.opponent)
         }
 
-        /// Returns true if we won (opponent lost).
-        pub fn has_won(&self) -> bool {
-            has_won(self.player)
-        }
-
         /// Returns an iterator of valid next board positions.
         /// Note that the resulting boards will be "flipped": opponent becomes player, player becomes opponent.
         pub fn moves(&self) -> Moves {
@@ -304,10 +299,6 @@ const WIN: StatusInt = 1;
 const DRAW: StatusInt = 0;
 
 fn solve_inner(board: Board) -> (StatusInt, usize) {
-    debug_assert!(
-        !board.has_won(),
-        "player already won; should have bailed out earlier!"
-    );
     if board.has_lost() {
         return (LOSS, 1);
     }
