@@ -297,6 +297,38 @@ mod board {
     }
 
     #[test]
+    fn test_find_any_win_sequence() {
+        use rand::prelude::SliceRandom;
+
+        let mut rng = rand::thread_rng();
+        let mut stack = vec![Board::new()];
+        let mut move_stack = {
+            let mut moves: Vec<_> = stack.last().unwrap().moves().collect();
+            moves.shuffle(&mut rng);
+            vec![moves.into_iter()]
+        };
+        'outer: while let Some(moves) = move_stack.last_mut() {
+            if let Some(bb) = moves.next() {
+                let found = bb.has_lost();
+                let mut moves: Vec<_> = bb.moves().collect();
+                moves.shuffle(&mut rng);
+                move_stack.push(moves.into_iter());
+                stack.push(bb);
+                if found {
+                    break 'outer;
+                }
+            } else {
+                // This one's empty; back off.
+                move_stack.pop();
+                stack.pop();
+            }
+        }
+        for (i, bb) in stack.iter().enumerate() {
+            println!("{}:\n{}\n", i, bb);
+        }
+    }
+
+    #[test]
     fn test_from_bits() {
         // Things that are not ok:
         let not_ok = |p, o| assert!(Board::from_bits(p, o).is_err());
