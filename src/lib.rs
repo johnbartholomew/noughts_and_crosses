@@ -143,7 +143,7 @@ mod board {
             if self.remain != 0 {
                 let b = lowest_bit16(self.remain);
                 self.remain &= !b;
-                Some(self.base.with_move(b))
+                Some(self.base.with_move_bits(b))
             } else {
                 None
             }
@@ -158,6 +158,9 @@ mod board {
             write!(f, "invalid board: {}", self.0)
         }
     }
+
+    #[derive(Debug)]
+    pub struct InvalidMove;
 
     impl Board {
         const FULL: u16 = 0b111111111;
@@ -214,12 +217,31 @@ mod board {
             }
         }
 
+        /// Attempts to play the move, specified by the index of the cell to play in.
+        /// If the move is not valid for any reason, returns Err(InvalidMove), otherwise
+        /// returns the new board.
+        pub fn with_move(&self, cell: u16) -> Result<Self, InvalidMove> {
+            if cell > 8 {
+                return Err(InvalidMove);
+            }
+            let bits = 1u16 << cell;
+            // Can only play on blank cells.
+            if bits & (self.player | self.opponent) != 0 {
+                return Err(InvalidMove);
+            }
+            // Can't play at all once someone has won.
+            if has_won(self.opponent) {
+                return Err(InvalidMove);
+            }
+            Ok(self.with_move_bits(bits))
+        }
+
         // Private because it relies on only accepting 'valid' next moves.
-        fn with_move(&self, position: u16) -> Self {
-            // with_move is only called from the Moves iterator, and Moves is constructed
+        fn with_move_bits(&self, position: u16) -> Self {
+            // with_move_bits is only called from the Moves iterator, and Moves is constructed
             // so that it only picks valid (open) cells to try, so position should always
             // be valid (as checked by this debug_assert) by construction.
-            // If with_move was public then the argument should be checked by assert!()
+            // If with_move_bits was public then the argument should be checked by assert!()
             // or should be handled as a clean error (ie, with a Result type).
             debug_assert!(
                 position > 0 && position <= 0b100000000 && position.is_power_of_two(),
